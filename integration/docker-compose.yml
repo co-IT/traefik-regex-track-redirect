@@ -1,0 +1,20 @@
+services:
+  traefik:
+    image: traefik:v3.5.6
+    command:
+      - --configFile=/etc/traefik/traefik.yml
+    ports:
+      - "8080:80"
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ..:/plugins-local/src/github.com/co-it/traefik-regex-request-and-redirect:ro
+    depends_on:
+      - backend
+      - tracker
+
+  backend:
+    image: traefik/whoami:v1.11
+
+  tracker:
+    image: traefik/whoami:v1.11

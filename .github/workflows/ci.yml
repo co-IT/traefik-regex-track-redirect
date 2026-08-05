@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Go checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Check formatting
+        run: test -z "$(gofmt -l .)"
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race -coverprofile=coverage.out ./...
+
+  traefik-integration:
+    name: Traefik integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Start Traefik with local plugin
+        run: docker compose -f integration/docker-compose.yml up -d
+
+      - name: Verify redirect
+        run: bash integration/test.sh
+
+      - name: Show container logs
+        if: failure()
+        run: docker compose -f integration/docker-compose.yml logs
+
+      - name: Stop containers
+        if: always()
+        run: docker compose -f integration/docker-compose.yml down -v
+
+  release:
+    name: Publish GitHub release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs:
+      - test
+      - traefik-integration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v1.${{ github.run_number }}.0
+        run: |
+          gh release create "${RELEASE_TAG}" \
+            --target "${GITHUB_SHA}" \
+            --title "${RELEASE_TAG}" \
+            --generate-notes

@@ -1,0 +1,15 @@
+entryPoints:
+  web:
+    address: :80
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+
+experimental:
+  localPlugins:
+    regexRequestRedirect:
+      moduleName: github.com/co-it/traefik-regex-request-and-redirect
+
+log:
+  level: DEBUG

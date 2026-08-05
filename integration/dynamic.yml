@@ -1,0 +1,25 @@
+http:
+  routers:
+    test:
+      entryPoints:
+        - web
+      rule: PathPrefix(`/`)
+      middlewares:
+        - tracked-redirect
+      service: backend
+
+  middlewares:
+    tracked-redirect:
+      plugin:
+        regexRequestRedirect:
+          regex: ^http://localhost:8080/old/(.*)$
+          replacement: https://example.com/new/${1}
+          trackEndpoint: http://tracker/events
+          trackMethod: GET
+          failOnTrackError: true
+
+  services:
+    backend:
+      loadBalancer:
+        servers:
+          - url: http://backend

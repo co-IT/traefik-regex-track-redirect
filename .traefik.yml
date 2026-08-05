@@ -1,0 +1,12 @@
+displayName: Regex Request and Redirect
+type: middleware
+runtime: yaegi
+import: github.com/co-it/traefik-regex-request-and-redirect
+summary: Reports matching requests to an HTTP service before applying a regex redirect.
+testData:
+  regex: ^http://localhost/(.*)
+  replacement: https://example.com/${1}
+  trackEndpoint: http://127.0.0.1:8080/events
+  trackMethod: POST
+  trackTimeout: 2s
+  failOnTrackError: false
