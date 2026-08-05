@@ -1,3 +1,3 @@
-module github.com/co-it/traefik-regex-request-and-redirect
+module github.com/co-it/traefik-regex-track-redirect
 
 go 1.23

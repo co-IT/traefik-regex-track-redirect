@@ -1,4 +1,4 @@
-package traefik_regex_request_and_redirect
+package traefik_regex_track_redirect
 
 import (
 	"context"

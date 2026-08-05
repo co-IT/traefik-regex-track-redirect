@@ -1,7 +1,7 @@
-// Package traefik_regex_request_and_redirect provides a Traefik middleware
+// Package traefik_regex_track_redirect provides a Traefik middleware
 // that reports matching requests to a tracking endpoint before returning a
 // regex redirect.
-package traefik_regex_request_and_redirect
+package traefik_regex_track_redirect
 
 import (
 	"bytes"
@@ -174,7 +174,7 @@ func (m *Middleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			http.Error(rw, "tracking service unavailable", http.StatusBadGateway)
 			return
 		}
-		log.Printf("regex-request-and-redirect %q: tracking request failed: %v", m.name, err)
+		log.Printf("regex-track-redirect %q: tracking request failed: %v", m.name, err)
 	}
 
 	rw.Header().Set("Location", parsedRedirectURL.String())
@@ -198,7 +198,7 @@ func (m *Middleware) report(req *http.Request, sourceURL, redirectURL string, st
 	if err != nil {
 		return err
 	}
-	trackRequest.Header.Set("User-Agent", "traefik-regex-request-and-redirect")
+	trackRequest.Header.Set("User-Agent", "traefik-regex-track-redirect")
 	for key, value := range m.trackHeaders {
 		trackRequest.Header.Set(key, value)
 	}

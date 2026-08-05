@@ -11,7 +11,7 @@ http:
   middlewares:
     tracked-redirect:
       plugin:
-        regexRequestRedirect:
+        regexTrackRedirect:
           regex: ^http://localhost:8080/old/(.*)$
           replacement: https://example.com/new/${1}
           trackEndpoint: http://tracker/events

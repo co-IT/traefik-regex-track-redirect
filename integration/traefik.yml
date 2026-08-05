@@ -8,8 +8,8 @@ providers:
 
 experimental:
   localPlugins:
-    regexRequestRedirect:
-      moduleName: github.com/co-it/traefik-regex-request-and-redirect
+    regexTrackRedirect:
+      moduleName: github.com/co-it/traefik-regex-track-redirect
 
 log:
   level: DEBUG

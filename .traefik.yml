@@ -1,7 +1,7 @@
-displayName: Regex Request and Redirect
+displayName: Regex Track Redirect
 type: middleware
 runtime: yaegi
-import: github.com/co-it/traefik-regex-request-and-redirect
+import: github.com/co-it/traefik-regex-track-redirect
 summary: Reports matching requests to an HTTP service before applying a regex redirect.
 testData:
   regex: ^http://localhost/(.*)

@@ -1,4 +1,4 @@
-# Traefik Regex Request and Redirect
+# Traefik Regex Track Redirect
 
 Eigenständig lauffähiges Traefik-Middleware-Plugin, das das Verhalten von
 `RedirectRegex` erweitert: Wenn eine URL auf den konfigurierten regulären
@@ -42,7 +42,7 @@ folgenden Body:
 ```json
 {
   "timestamp": "2026-08-05T12:00:00Z",
-  "plugin": "regexRequestRedirect",
+  "plugin": "regexTrackRedirect",
   "method": "GET",
   "sourceUrl": "http://localhost/old/item",
   "redirectUrl": "https://example.com/new/item",
@@ -60,7 +60,7 @@ nicht. Mit `failOnTrackError: true` arbeitet es *fail-closed*.
 ## Installation aus einem GitHub-Release
 
 Das Repository muss unter dem in `go.mod` und `.traefik.yml` angegebenen Pfad
-`github.com/co-it/traefik-regex-request-and-redirect` veröffentlicht und mit
+`github.com/co-it/traefik-regex-track-redirect` veröffentlicht und mit
 einem SemVer-Tag versehen sein, zum Beispiel `v1.0.0`.
 
 Statische Traefik-Konfiguration:
@@ -68,8 +68,8 @@ Statische Traefik-Konfiguration:
 ```yaml
 experimental:
   plugins:
-    regexRequestRedirect:
-      moduleName: github.com/co-it/traefik-regex-request-and-redirect
+    regexTrackRedirect:
+      moduleName: github.com/co-it/traefik-regex-track-redirect
       version: v1.0.0
 ```
 
@@ -80,7 +80,7 @@ http:
   middlewares:
     tracked-redirect:
       plugin:
-        regexRequestRedirect:
+        regexTrackRedirect:
           regex: ^https?://old\.example\.com/(.*)
           replacement: https://new.example.com/${1}
           permanent: true
