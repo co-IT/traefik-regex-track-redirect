@@ -220,6 +220,7 @@ func (m *Middleware) report(req *http.Request, sourceURL, redirectURL string, st
 func (m *Middleware) newTrackRequest(ctx context.Context, event Event) (*http.Request, error) {
 	if m.trackMethod == http.MethodGet {
 		request, err := http.NewRequestWithContext(ctx, http.MethodGet, m.trackEndpoint, nil)
+		log.Printf("redirect to %s", m.trackEndpoint)
 		if err != nil {
 			return nil, fmt.Errorf("create tracking request: %w", err)
 		}
