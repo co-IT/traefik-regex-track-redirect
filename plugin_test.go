@@ -95,6 +95,41 @@ func TestTrackEndpointWithGETKeepsConfiguredQuery(t *testing.T) {
 	}
 }
 
+func TestTrackEndpointExpandsCaptureGroups(t *testing.T) {
+	captured := make(chan struct {
+		path     string
+		rawQuery string
+	}, 1)
+	tracker := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		captured <- struct {
+			path     string
+			rawQuery string
+		}{path: req.URL.Path, rawQuery: req.URL.RawQuery}
+		rw.WriteHeader(http.StatusNoContent)
+	}))
+	defer tracker.Close()
+
+	handler := newTestMiddleware(t, http.NotFoundHandler(), &Config{
+		Regex:         `^https?://example\.com/(.*)(\?.*)$`,
+		Replacement:   "https://example.com/new/${1}${2}",
+		TrackEndpoint: tracker.URL + "/track${2}",
+		TrackMethod:   http.MethodGet,
+	})
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "https://example.com/old?t=123&a=lt", nil))
+
+	if response.Code != http.StatusFound {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusFound)
+	}
+	request := <-captured
+	if request.path != "/track" {
+		t.Fatalf("tracking path = %q, want /track", request.path)
+	}
+	if request.rawQuery != "t=123&a=lt" {
+		t.Fatalf("tracking query = %q, want t=123&a=lt", request.rawQuery)
+	}
+}
+
 func TestNonMatchingRequestCallsNext(t *testing.T) {
 	var trackRequests atomic.Int32
 	tracker := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {

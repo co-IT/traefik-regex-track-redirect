@@ -145,7 +145,7 @@ func trackEndpointFromConfig(config *Config) (string, error) {
 		return "", errors.New("trackEndpoint must be an absolute HTTP(S) URL")
 	}
 
-	return parsed.String(), nil
+	return endpoint, nil
 }
 
 // ServeHTTP implements http.Handler.
@@ -194,7 +194,8 @@ func (m *Middleware) report(req *http.Request, sourceURL, redirectURL string, st
 		UserAgent:   req.UserAgent(),
 	}
 
-	trackRequest, err := m.newTrackRequest(req.Context(), event)
+	trackEndpoint := expandReplacement(m.regex, sourceURL, m.trackEndpoint)
+	trackRequest, err := m.newTrackRequest(req.Context(), event, trackEndpoint)
 	if err != nil {
 		return err
 	}
@@ -217,10 +218,18 @@ func (m *Middleware) report(req *http.Request, sourceURL, redirectURL string, st
 	return nil
 }
 
-func (m *Middleware) newTrackRequest(ctx context.Context, event Event) (*http.Request, error) {
+func expandReplacement(regex *regexp.Regexp, sourceURL, replacement string) string {
+	match := regex.FindStringSubmatchIndex(sourceURL)
+	if match == nil {
+		return replacement
+	}
+	return string(regex.ExpandString(nil, replacement, sourceURL, match))
+}
+
+func (m *Middleware) newTrackRequest(ctx context.Context, event Event, trackEndpoint string) (*http.Request, error) {
 	if m.trackMethod == http.MethodGet {
-		request, err := http.NewRequestWithContext(ctx, http.MethodGet, m.trackEndpoint, nil)
-		log.Printf("redirect to %s", m.trackEndpoint)
+		request, err := http.NewRequestWithContext(ctx, http.MethodGet, trackEndpoint, nil)
+		log.Printf("redirect to %s", trackEndpoint)
 		if err != nil {
 			return nil, fmt.Errorf("create tracking request: %w", err)
 		}

@@ -25,16 +25,16 @@ verwendet, damit Methode und Body erhalten bleiben.
 | `regex` | ja | – | Go-kompatibler regulärer Ausdruck für die vollständige Request-URL |
 | `replacement` | nein | leer | Ersetzungswert; Capture Groups sollten als `${1}` geschrieben werden |
 | `permanent` | nein | `false` | Aktiviert permanente Redirects |
-| `trackEndpoint` | ja | – | Absolute HTTP(S)-URL des externen Tracking-Dienstes |
+| `trackEndpoint` | ja | – | Absolute HTTP(S)-URL des externen Tracking-Dienstes; Capture Groups aus `regex` können als `${1}`, `${2}` usw. verwendet werden |
 | `trackMethod` | nein | `POST` | HTTP-Methode für den Tracking-Aufruf: `GET` oder `POST` |
 | `trackTimeout` | nein | `2s` | Timeout im Go-Duration-Format, zum Beispiel `500ms` oder `3s` |
 | `trackHeaders` | nein | `{}` | Zusätzliche Header für den Tracking-Aufruf |
 | `failOnTrackError` | nein | `false` | Liefert bei Fehlern des Tracking-Dienstes `502` statt des Redirects |
 
-Bei `GET` ruft das Plugin `trackEndpoint` unverändert und ohne Request-Body auf.
-Es fügt insbesondere keine Query-Parameter hinzu; benötigte Query-Parameter
-müssen bereits in `trackEndpoint` konfiguriert sein, zum Beispiel
-`https://events.example.com/track?source=traefik`.
+Bei `GET` ruft das Plugin den aufgelösten `trackEndpoint` ohne Request-Body auf.
+Capture Groups aus `regex` werden dabei im `trackEndpoint` ersetzt. So wird aus
+`trackEndpoint: https://events.example.com/track${2}` bei einer Anfrage mit
+`?source=traefik` der Endpunkt `https://events.example.com/track?source=traefik`.
 
 Bei `POST` erhält der externe Dienst `Content-Type: application/json` und
 folgenden Body:
