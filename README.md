@@ -29,6 +29,7 @@ verwendet, damit Methode und Body erhalten bleiben.
 | `trackMethod` | nein | `POST` | HTTP-Methode für den Tracking-Aufruf: `GET` oder `POST` |
 | `trackTimeout` | nein | `2s` | Timeout im Go-Duration-Format, zum Beispiel `500ms` oder `3s` |
 | `trackHeaders` | nein | `{}` | Zusätzliche Header für den Tracking-Aufruf |
+| `preserveHeaders` | nein | `false` | Überträgt alle Header des Clientrequests an den Tracking-Aufruf; explizite `trackHeaders` überschreiben dabei gleiche Namen |
 | `failOnTrackError` | nein | `false` | Liefert bei Fehlern des Tracking-Dienstes `502` statt des Redirects |
 
 Bei `GET` ruft das Plugin den aufgelösten `trackEndpoint` ohne Request-Body auf.

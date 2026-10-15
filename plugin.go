@@ -31,6 +31,7 @@ type Config struct {
 	TrackMethod      string            `json:"trackMethod,omitempty"`
 	TrackTimeout     string            `json:"trackTimeout,omitempty"`
 	TrackHeaders     map[string]string `json:"trackHeaders,omitempty"`
+	PreserveHeaders  bool              `json:"preserveHeaders,omitempty"`
 	FailOnTrackError bool              `json:"failOnTrackError,omitempty"`
 }
 
@@ -53,6 +54,7 @@ type Middleware struct {
 	trackEndpoint    string
 	trackMethod      string
 	trackHeaders     map[string]string
+	preserveHeaders  bool
 	failOnTrackError bool
 	client           *http.Client
 }
@@ -126,6 +128,7 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 		trackEndpoint:    endpoint,
 		trackMethod:      trackMethod,
 		trackHeaders:     headers,
+		preserveHeaders:  config.PreserveHeaders,
 		failOnTrackError: config.FailOnTrackError,
 		client:           &http.Client{Timeout: timeout},
 	}, nil
@@ -200,6 +203,11 @@ func (m *Middleware) report(req *http.Request, sourceURL, redirectURL string, st
 		return err
 	}
 	trackRequest.Header.Set("User-Agent", "traefik-regex-track-redirect")
+	if m.preserveHeaders {
+		for key, values := range req.Header {
+			trackRequest.Header[key] = append([]string(nil), values...)
+		}
+	}
 	for key, value := range m.trackHeaders {
 		trackRequest.Header.Set(key, value)
 	}

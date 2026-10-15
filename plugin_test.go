@@ -206,6 +206,43 @@ func TestRedirectReportsFirst(t *testing.T) {
 	}
 }
 
+func TestPreserveHeadersForwardsClientHeaders(t *testing.T) {
+	captured := make(chan http.Header, 1)
+	tracker := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		captured <- req.Header.Clone()
+		rw.WriteHeader(http.StatusNoContent)
+	}))
+	defer tracker.Close()
+
+	handler := newTestMiddleware(t, http.NotFoundHandler(), &Config{
+		Regex:           `^http://example\.com/old$`,
+		Replacement:     "https://example.com/new",
+		TrackEndpoint:   tracker.URL,
+		PreserveHeaders: true,
+		TrackHeaders:    map[string]string{"X-Configured": "value"},
+	})
+	request := httptest.NewRequest(http.MethodGet, "http://example.com/old", nil)
+	request.Header.Add("X-Client", "one")
+	request.Header.Add("X-Client", "two")
+	request.Header.Set("User-Agent", "client-agent")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusFound {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusFound)
+	}
+	headers := <-captured
+	if got := headers.Values("X-Client"); strings.Join(got, ",") != "one,two" {
+		t.Fatalf("X-Client = %v, want [one two]", got)
+	}
+	if got := headers.Get("User-Agent"); got != "client-agent" {
+		t.Fatalf("User-Agent = %q, want client-agent", got)
+	}
+	if got := headers.Get("X-Configured"); got != "value" {
+		t.Fatalf("X-Configured = %q, want value", got)
+	}
+}
+
 func TestPermanentRedirectPreservesNonGETMethod(t *testing.T) {
 	tracker := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusNoContent)
