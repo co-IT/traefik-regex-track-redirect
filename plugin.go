@@ -198,7 +198,11 @@ func (m *Middleware) report(req *http.Request, sourceURL, redirectURL string, st
 	}
 
 	trackEndpoint := expandReplacement(m.regex, sourceURL, m.trackEndpoint)
-	trackRequest, err := m.newTrackRequest(req.Context(), event, trackEndpoint)
+	trackContext := req.Context()
+	if !m.failOnTrackError {
+		trackContext = context.WithoutCancel(trackContext)
+	}
+	trackRequest, err := m.newTrackRequest(trackContext, event, trackEndpoint)
 	if err != nil {
 		return err
 	}
@@ -212,6 +216,19 @@ func (m *Middleware) report(req *http.Request, sourceURL, redirectURL string, st
 		trackRequest.Header.Set(key, value)
 	}
 
+	if !m.failOnTrackError {
+		go func() {
+			if err := m.sendTrackRequest(trackRequest); err != nil {
+				log.Printf("regex-track-redirect %q: tracking request failed: %v", m.name, err)
+			}
+		}()
+		return nil
+	}
+
+	return m.sendTrackRequest(trackRequest)
+}
+
+func (m *Middleware) sendTrackRequest(trackRequest *http.Request) error {
 	response, err := m.client.Do(trackRequest)
 	if err != nil {
 		return fmt.Errorf("call tracking endpoint: %w", err)

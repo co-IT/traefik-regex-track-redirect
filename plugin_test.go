@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestCreateConfig(t *testing.T) {
@@ -241,6 +242,44 @@ func TestPreserveHeadersForwardsClientHeaders(t *testing.T) {
 	if got := headers.Get("X-Configured"); got != "value" {
 		t.Fatalf("X-Configured = %q, want value", got)
 	}
+}
+
+func TestFailOpenDoesNotWaitForTrackerResponse(t *testing.T) {
+	trackerStarted := make(chan struct{})
+	releaseTracker := make(chan struct{})
+	trackerFinished := make(chan struct{})
+	tracker := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		close(trackerStarted)
+		<-releaseTracker
+		close(trackerFinished)
+		rw.WriteHeader(http.StatusNoContent)
+	}))
+	defer tracker.Close()
+
+	handler := newTestMiddleware(t, http.NotFoundHandler(), &Config{
+		Regex:         `^http://example\.com/old$`,
+		Replacement:   "https://example.com/new",
+		TrackEndpoint: tracker.URL,
+	})
+	response := httptest.NewRecorder()
+	served := make(chan struct{})
+	go func() {
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "http://example.com/old", nil))
+		close(served)
+	}()
+
+	select {
+	case <-served:
+	case <-time.After(time.Second):
+		t.Fatal("redirect waited for tracking response")
+	}
+	if response.Code != http.StatusFound {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusFound)
+	}
+
+	<-trackerStarted
+	close(releaseTracker)
+	<-trackerFinished
 }
 
 func TestPermanentRedirectPreservesNonGETMethod(t *testing.T) {

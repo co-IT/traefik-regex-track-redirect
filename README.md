@@ -9,8 +9,8 @@ externen HTTP-Service auf. Anschließend liefert es den Redirect aus.
 
 1. Das Plugin bildet die vollständige Request-URL und prüft `regex`.
 2. Bei einem Treffer wird `replacement` angewendet.
-3. Das Plugin ruft den Tracking-Endpunkt synchron mit der konfigurierten
-   HTTP-Methode auf.
+3. Das Plugin ruft den Tracking-Endpunkt mit der konfigurierten HTTP-Methode
+   auf; bei `failOnTrackError: false` erfolgt der Aufruf asynchron.
 4. Nach der Antwort des Dienstes folgt der Redirect. Ohne Treffer wird der
    nächste Handler unverändert aufgerufen.
 
@@ -54,9 +54,11 @@ folgenden Body:
 ```
 
 Die Antwort des Dienstes gilt bei jedem Status von `200` bis `299` als
-erfolgreich. Standardmäßig arbeitet das Plugin *fail-open*: Netzwerkfehler,
-Timeouts und andere Statuscodes werden geloggt, verhindern den Redirect aber
-nicht. Mit `failOnTrackError: true` arbeitet es *fail-closed*.
+erfolgreich. Standardmäßig arbeitet das Plugin *fail-open*: Der Redirect wird
+sofort ausgeliefert, während der Tracking-Aufruf im Hintergrund läuft.
+Netzwerkfehler, Timeouts und andere Statuscodes werden geloggt, verhindern den
+Redirect aber nicht. Mit `failOnTrackError: true` wartet das Plugin auf die
+Tracking-Antwort und arbeitet *fail-closed*.
 
 ## Installation aus einem GitHub-Release
 
